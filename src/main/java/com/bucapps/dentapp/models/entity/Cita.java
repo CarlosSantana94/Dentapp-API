@@ -24,9 +24,20 @@ public class Cita extends BaseEntity {
 
     private String nombreOpcional;
 
+    private String telOpcional;
+
     private Boolean apartada;
 
     private Boolean pagada;
+
+    private String tokenCardConekta;
+
+    private String ordenPagadaConekta;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "estado_confirmacion_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private EstadoConfirmacion estadoConfirmacion;
 
     private String ordenPagoConekta;
 

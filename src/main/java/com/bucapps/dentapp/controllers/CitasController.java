@@ -25,20 +25,44 @@ public class CitasController {
         return ResponseEntity.ok(citasService.obtenerDiasDisponiblesPorDr(doctorId));
     }
 
-    @GetMapping(value = "citas/{doctorId}/{fecha}", produces = "application/json")
+    @GetMapping(value = "citas/{doctorId}/{fecha}/{huboCambio}", produces = "application/json")
     @ResponseBody
     public ResponseEntity<List<Time>> obtenerDiasDisponiblesPorDr(
             @PathVariable(name = "doctorId") Long doctorId,
-            @PathVariable(name = "fecha") String fecha
+            @PathVariable(name = "fecha") String fecha,
+            @PathVariable(name = "huboCambio") Boolean huboCambio,
+            @RequestHeader(name = "idUsuario") String idUsuario
     ) throws ParseException {
-        return ResponseEntity.ok(citasService.obtenerHorarioDisponiblePorDoctorYDia(doctorId, fecha));
+        return ResponseEntity.ok(citasService.obtenerHorarioDisponiblePorDoctorYDia(doctorId, fecha, huboCambio, idUsuario));
     }
 
     @PostMapping(value = "citas", produces = "application/json")
     @ResponseBody
-    public ResponseEntity<Cita> apartarCita(@RequestBody ApartaCitaDto dto){
+    public ResponseEntity<Cita> apartarCita(@RequestBody ApartaCitaDto dto) {
 
         return ResponseEntity.ok(citasService.apartarCita(dto));
 
     }
+
+
+    @PostMapping(value = "citas/confirmar/usuario", produces = "application/json")
+    @ResponseBody
+    public ResponseEntity<ApartaCitaDto> confirmarCitaUsuario(@RequestBody ApartaCitaDto dto) {
+
+        return ResponseEntity.ok(citasService.confirmarCitaUsuario(dto));
+
+    }
+
+    @GetMapping(value = "citas/id/{citaId}", produces = "application/json")
+    @ResponseBody
+    public ResponseEntity<ApartaCitaDto> obtenerCita(@PathVariable(name = "citaId") Long citaId) {
+        return ResponseEntity.ok(citasService.obtenerCita(citaId));
+    }
+
+    @GetMapping(value = "citas/misCitas/", produces = "application/json")
+    @ResponseBody
+    public ResponseEntity<List<ApartaCitaDto>> misCitasUsuario(@RequestHeader(name = "idUsuario") String idUsuario) {
+        return ResponseEntity.ok(citasService.misCitasUsuario(idUsuario));
+    }
+
 }

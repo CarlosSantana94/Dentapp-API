@@ -1,9 +1,11 @@
 package com.bucapps.dentapp.services;
 
+
 import com.bucapps.dentapp.models.dto.ApartaCitaDto;
 import com.bucapps.dentapp.models.entity.Cita;
 import com.bucapps.dentapp.models.entity.Doctor;
 import com.bucapps.dentapp.models.repository.CitaRepository;
+import com.bucapps.dentapp.models.repository.EstadoConfirmacionRepository;
 import com.bucapps.dentapp.models.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,9 @@ public class CitasService {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private EstadoConfirmacionRepository estadoConfirmacionRepository;
 
     @Autowired
     private DoctoresService doctoresService;
@@ -87,7 +92,11 @@ public class CitasService {
         return fechas;
     }
 
-    public List<Time> obtenerHorarioDisponiblePorDoctorYDia(Long doctorId, String diaSeleccionado) throws ParseException {
+    public List<Time> obtenerHorarioDisponiblePorDoctorYDia(Long doctorId, String diaSeleccionado, Boolean huboCambio, String idUsuario) throws ParseException {
+
+        if (huboCambio) {
+            citaRepository.borrarCitaApartadaPrevia(doctorId, idUsuario);
+        }
 
         Date dia = new SimpleDateFormat("dd-MM-yyyy").parse(diaSeleccionado);
         Doctor doctor = doctoresService.obtenerDoctorPorId(doctorId);
@@ -145,6 +154,7 @@ public class CitasService {
             }
 
             java.sql.Time sqlTime = new java.sql.Time(d1.getTime());
+
             if (citasCreadas.stream().noneMatch(c -> c.getHora().equals(sqlTime))) {
                 horariosDisponibles.add(sqlTime);
             }
@@ -157,24 +167,105 @@ public class CitasService {
 
 
     public Cita apartarCita(ApartaCitaDto dto) {
-        Cita cita = citaRepository.getAllByDoctorIdAndUsuarioTokenAndApartada(
-                dto.getDoctorId(),
-                dto.getUsuario(),
-                true);
+        Cita cita = new Cita();
+        if (citaRepository.countAllByDoctorIdAndUsuarioTokenAndFechaAndHora(dto.getDoctorId(),
+                dto.getUsuario(), dto.getFecha(), Time.valueOf(dto.getHora())) == 0) {
+            cita = citaRepository.getAllByDoctorIdAndUsuarioTokenAndApartada(
+                    dto.getDoctorId(),
+                    dto.getUsuario(),
+                    true);
 
-        if (cita == null) {
-            cita = new Cita();
+
+            if (cita == null) {
+                cita = new Cita();
+            }
+
+            cita.setFecha(dto.getFecha());
+            cita.setHora(Time.valueOf(dto.getHora()));
+            cita.setDoctor(doctoresService.obtenerDoctorPorId(dto.getDoctorId()));
+            cita.setApartada(true);
+            cita.setNombreOpcional(dto.getNombreOpcional());
+            cita.setTelOpcional(dto.getTelOpcional());
+            cita.setUsuario(usuarioRepository.getAllByToken(dto.getUsuario()));
+
+            citaRepository.save(cita);
+
+        } else {
+            cita.setId(0L);
         }
 
-        cita.setFecha(dto.getFecha());
-        cita.setHora(Time.valueOf(dto.getHora()));
-        cita.setDoctor(doctoresService.obtenerDoctorPorId(dto.getDoctorId()));
-        cita.setApartada(true);
+
+        return cita;
+    }
+
+
+    public ApartaCitaDto confirmarCitaUsuario(ApartaCitaDto dto) {
+        Cita cita = citaRepository.getById(dto.getId());
+        cita.setEstadoConfirmacion(estadoConfirmacionRepository.getById(1L));
+        cita.setTokenCardConekta(dto.getTokenCardConekta());
         cita.setNombreOpcional(dto.getNombreOpcional());
-        cita.setUsuario(usuarioRepository.getAllByToken(dto.getUsuario()));
+        cita.setApartada(false);
 
         citaRepository.save(cita);
 
-        return cita;
+
+        return obtenerCita(dto.getId());
+    }
+
+    public ApartaCitaDto obtenerCita(Long citaId) {
+        Cita cita = citaRepository.getById(citaId);
+
+        ApartaCitaDto dto = new ApartaCitaDto();
+        dto.setId(cita.getId());
+        dto.setDoctorId(cita.getDoctor().getId());
+        dto.setFecha(cita.getFecha());
+        dto.setHora(cita.getHora().toString());
+        dto.setNombreOpcional(cita.getNombreOpcional());
+        dto.setUsuario(cita.getUsuario().getNombre());
+        dto.setNombreDoctor(cita.getDoctor().getNombre());
+        dto.setNombreClinica(cita.getDoctor().getClinica().getNombre());
+        dto.setFotoDoctor(cita.getDoctor().getPhoto());
+        dto.setTelDoctor(cita.getDoctor().getTel());
+        dto.setEstadoCita(cita.getEstadoConfirmacion().getEstado());
+        dto.setDescripcionEstadoCita(cita.getEstadoConfirmacion().getNombre());
+
+        if (cita.getDoctor().getClinica().getDireccion().getInterior() != null) {
+            dto.setDireccionClinica(cita.getDoctor().getClinica().getDireccion().getCalle()
+                    + " "
+                    + cita.getDoctor().getClinica().getDireccion().getNumero() +
+                    " "
+                    + cita.getDoctor().getClinica().getDireccion().getInterior());
+        }else {
+            dto.setDireccionClinica(cita.getDoctor().getClinica().getDireccion().getCalle()
+                    + " "
+                    + cita.getDoctor().getClinica().getDireccion().getNumero());
+        }
+        return dto;
+    }
+
+    public List<ApartaCitaDto> misCitasUsuario(String idUsuario) {
+        List<ApartaCitaDto> listadoCitas = new ArrayList<>();
+
+        List<Cita> citasCreadas = citaRepository.getAllUsuarioToken(idUsuario);
+
+        for (Cita cita : citasCreadas) {
+            ApartaCitaDto dto = new ApartaCitaDto();
+            dto.setId(cita.getId());
+            dto.setDoctorId(cita.getDoctor().getId());
+            dto.setFecha(cita.getFecha());
+            dto.setHora(cita.getHora().toString());
+            dto.setNombreOpcional(cita.getNombreOpcional());
+            dto.setUsuario(cita.getUsuario().getNombre());
+            dto.setNombreDoctor(cita.getDoctor().getNombre());
+            dto.setNombreClinica(cita.getDoctor().getClinica().getNombre());
+            dto.setFotoDoctor(cita.getDoctor().getPhoto());
+            dto.setTelDoctor(cita.getDoctor().getTel());
+            dto.setEstadoCita(cita.getEstadoConfirmacion().getEstado());
+            dto.setDescripcionEstadoCita(cita.getEstadoConfirmacion().getNombre());
+
+
+            listadoCitas.add(dto);
+        }
+        return listadoCitas;
     }
 }
