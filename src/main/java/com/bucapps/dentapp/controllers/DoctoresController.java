@@ -30,4 +30,10 @@ public class DoctoresController {
         return ResponseEntity.ok(doctoresService.obtenerDoctorPorId(id));
     }
 
+    @PostMapping(value = "doctores/nuevo",produces = "application/json")
+    @ResponseBody
+    public ResponseEntity<Doctor> crearDoctor(@RequestBody Doctor doctor){
+        return ResponseEntity.ok(doctoresService.crearDoctor(doctor));
+    }
+
 }

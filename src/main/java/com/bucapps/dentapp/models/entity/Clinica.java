@@ -18,7 +18,6 @@ public class Clinica extends BaseEntity {
 
     private String nombre;
 
-
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "direccion_id")
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})

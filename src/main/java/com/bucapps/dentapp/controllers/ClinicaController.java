@@ -35,4 +35,10 @@ public class ClinicaController {
         return ResponseEntity.ok(clinicaService.obtenerClinicas());
     }
 
+    @PostMapping(value = "clinica", produces = "application/json")
+    @ResponseBody
+    public ResponseEntity<Clinica> crearOActualizarClinica(@RequestBody Clinica clinica){
+        return ResponseEntity.ok(clinicaService.crearOActualizarClinica(clinica));
+    }
+
 }

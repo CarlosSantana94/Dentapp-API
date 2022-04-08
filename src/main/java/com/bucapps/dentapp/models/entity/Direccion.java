@@ -10,7 +10,7 @@ import javax.persistence.Entity;
 @Getter
 @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Direccion extends BaseEntity{
+public class Direccion extends BaseEntity {
 
     private String calle;
 
@@ -18,6 +18,9 @@ public class Direccion extends BaseEntity{
 
     private String interior;
 
+    private String lat;
+
+    private String lng;
 
 
 }
