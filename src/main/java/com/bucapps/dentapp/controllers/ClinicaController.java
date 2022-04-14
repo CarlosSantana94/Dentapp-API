@@ -1,5 +1,6 @@
 package com.bucapps.dentapp.controllers;
 
+import com.bucapps.dentapp.models.dto.UbicacionesClinicaDto;
 import com.bucapps.dentapp.models.entity.Clinica;
 import com.bucapps.dentapp.models.entity.Doctor;
 import com.bucapps.dentapp.services.ClinicaService;
@@ -37,8 +38,14 @@ public class ClinicaController {
 
     @PostMapping(value = "clinica", produces = "application/json")
     @ResponseBody
-    public ResponseEntity<Clinica> crearOActualizarClinica(@RequestBody Clinica clinica){
+    public ResponseEntity<Clinica> crearOActualizarClinica(@RequestBody Clinica clinica) {
         return ResponseEntity.ok(clinicaService.crearOActualizarClinica(clinica));
+    }
+
+    @GetMapping(value = "clinica/ubicaciones", produces = "application/json")
+    @ResponseBody
+    public ResponseEntity<List<UbicacionesClinicaDto>> obtenerUbicacionesClinica() {
+        return ResponseEntity.ok(clinicaService.obtenerUbicacionesClinica());
     }
 
 }
