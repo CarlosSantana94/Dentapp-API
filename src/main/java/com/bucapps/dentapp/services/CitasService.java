@@ -186,6 +186,7 @@ public class CitasService {
             cita.setApartada(true);
             cita.setNombreOpcional(dto.getNombreOpcional());
             cita.setTelOpcional(dto.getTelOpcional());
+            cita.setEstadoConfirmacion(estadoConfirmacionRepository.getById(0L));
             cita.setUsuario(usuarioRepository.getAllByToken(dto.getUsuario()));
 
             citaRepository.save(cita);
@@ -228,6 +229,7 @@ public class CitasService {
         dto.setTelDoctor(cita.getDoctor().getTel());
         dto.setEstadoCita(cita.getEstadoConfirmacion().getEstado());
         dto.setDescripcionEstadoCita(cita.getEstadoConfirmacion().getNombre());
+        dto.setPrecioCita(cita.getDoctor().getTarifa());
 
         if (cita.getDoctor().getClinica().getDireccion().getInterior() != null) {
             dto.setDireccionClinica(cita.getDoctor().getClinica().getDireccion().getCalle()
@@ -235,7 +237,7 @@ public class CitasService {
                     + cita.getDoctor().getClinica().getDireccion().getNumero() +
                     " "
                     + cita.getDoctor().getClinica().getDireccion().getInterior());
-        }else {
+        } else {
             dto.setDireccionClinica(cita.getDoctor().getClinica().getDireccion().getCalle()
                     + " "
                     + cita.getDoctor().getClinica().getDireccion().getNumero());
