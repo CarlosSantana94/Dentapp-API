@@ -35,4 +35,8 @@ public interface CitaRepository extends JpaRepository<Cita, Long> {
             "  and usuario_id = (select id from usuario where token = ?1)\n" +
             "order by fecha asc ,hora asc ", nativeQuery = true)
     List<Cita> getAllUsuarioToken(String usuarioToken);
+
+    List<Cita> getAllByDoctorIdAndFechaOrderByHoraAsc(Long drId, Date fecha);
+
+    List<Cita> getAllByDoctorIdAndApartadaOrderByCreatedDateAsc(Long drId, Boolean apartada);
 }

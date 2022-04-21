@@ -1,12 +1,20 @@
 package com.bucapps.dentapp.services;
 
-
 import com.bucapps.dentapp.models.dto.ApartaCitaDto;
+import com.bucapps.dentapp.models.dto.calendarioCita.CitaDrDTO;
+import com.bucapps.dentapp.models.dto.calendarioCita.DiaCitaDto;
+import com.bucapps.dentapp.models.dto.conekta.*;
 import com.bucapps.dentapp.models.entity.Cita;
 import com.bucapps.dentapp.models.entity.Doctor;
 import com.bucapps.dentapp.models.repository.CitaRepository;
 import com.bucapps.dentapp.models.repository.EstadoConfirmacionRepository;
 import com.bucapps.dentapp.models.repository.UsuarioRepository;
+import com.google.gson.Gson;
+import io.conekta.Conekta;
+import io.conekta.Error;
+import io.conekta.ErrorList;
+import io.conekta.Order;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -92,10 +100,11 @@ public class CitasService {
         return fechas;
     }
 
-    public List<Time> obtenerHorarioDisponiblePorDoctorYDia(Long doctorId, String diaSeleccionado, Boolean huboCambio, String idUsuario) throws ParseException {
+    public List<Time> obtenerHorarioDisponiblePorDoctorYDia(Long doctorId, String diaSeleccionado,
+                                                            Boolean huboCambio, String token) throws ParseException {
 
         if (huboCambio) {
-            citaRepository.borrarCitaApartadaPrevia(doctorId, idUsuario);
+            citaRepository.borrarCitaApartadaPrevia(doctorId, token);
         }
 
         Date dia = new SimpleDateFormat("dd-MM-yyyy").parse(diaSeleccionado);
@@ -202,14 +211,63 @@ public class CitasService {
 
     public ApartaCitaDto confirmarCitaUsuario(ApartaCitaDto dto) {
         Cita cita = citaRepository.getById(dto.getId());
-        cita.setEstadoConfirmacion(estadoConfirmacionRepository.getById(1L));
-        cita.setTokenCardConekta(dto.getTokenCardConekta());
-        cita.setNombreOpcional(dto.getNombreOpcional());
-        cita.setApartada(false);
 
-        citaRepository.save(cita);
+        ConektaDto conektaDto = new ConektaDto();
+        conektaDto.setCurrency("mxn");
+        MetadataDto metadataDto = new MetadataDto();
+        metadataDto.setTest(true);
+        conektaDto.setMetadata(metadataDto);
+
+        List<LineItemDto> lineItemDtos = new ArrayList<>();
+        LineItemDto lineItemDto = new LineItemDto();
+        lineItemDto.setName("Dentapp Cita");
+        lineItemDto.setDescription("Dentapp Cita para:" + cita.getUsuario().getNombre());
+        lineItemDto.setUnit_price(dto.getPrecioCita().intValue() * 100);
+        lineItemDto.setQuantity(1L);
+        lineItemDtos.add(lineItemDto);
+        conektaDto.setLine_items(lineItemDtos);
+
+        CustomerInfoDto customerInfoDto = new CustomerInfoDto();
+        customerInfoDto.setName(cita.getUsuario().getNombre());
+        customerInfoDto.setPhone(dto.getTelOpcional());
+        customerInfoDto.setEmail(cita.getUsuario().getEmail());
+        conektaDto.setCustomer_info(customerInfoDto);
+
+        List<ChargesDto> chargesDtos = new ArrayList<>();
+        ChargesDto chargesDto = new ChargesDto();
+        PaymentMethodDto paymentMethodDto = new PaymentMethodDto();
+        paymentMethodDto.setType("card");
+        // paymentMethodDto.setToken_id(dto.getTokenCardConekta());
+        paymentMethodDto.setToken_id("tok_test_visa_4242");
+        chargesDto.setPayment_method(paymentMethodDto);
+        chargesDto.setAmount(dto.getPrecioCita().intValue() * 100);
+        chargesDtos.add(chargesDto);
+        conektaDto.setCharges(chargesDtos);
 
 
+        Conekta.setApiKey("key_n4aydsqdx7VKqrD98rmdVQ");
+
+        try {
+            String jsonInString = new Gson().toJson(conektaDto);
+            JSONObject conektaJson = new JSONObject(jsonInString);
+            Order completeOrder = Order.create(conektaJson);
+            System.out.println(completeOrder.charges.get(0));
+            cita.setEstadoConfirmacion(estadoConfirmacionRepository.getById(1L));
+
+
+            cita.setOrdenPagoConekta(completeOrder.id);
+            cita.setTelOpcional(dto.getTelOpcional());
+            cita.setTokenCardConekta(dto.getTokenCardConekta());
+            cita.setNombreOpcional(dto.getNombreOpcional());
+            cita.setApartada(false);
+            cita.setPagada(true);
+
+            citaRepository.save(cita);
+
+
+        } catch (ErrorList | Error e) {
+            e.printStackTrace();
+        }
         return obtenerCita(dto.getId());
     }
 
@@ -231,6 +289,7 @@ public class CitasService {
         dto.setDescripcionEstadoCita(cita.getEstadoConfirmacion().getNombre());
         dto.setPrecioCita(cita.getDoctor().getTarifa());
 
+
         if (cita.getDoctor().getClinica().getDireccion().getInterior() != null) {
             dto.setDireccionClinica(cita.getDoctor().getClinica().getDireccion().getCalle()
                     + " "
@@ -245,10 +304,10 @@ public class CitasService {
         return dto;
     }
 
-    public List<ApartaCitaDto> misCitasUsuario(String idUsuario) {
+    public List<ApartaCitaDto> misCitasUsuario(String token) {
         List<ApartaCitaDto> listadoCitas = new ArrayList<>();
 
-        List<Cita> citasCreadas = citaRepository.getAllUsuarioToken(idUsuario);
+        List<Cita> citasCreadas = citaRepository.getAllUsuarioToken(token);
 
         for (Cita cita : citasCreadas) {
             ApartaCitaDto dto = new ApartaCitaDto();
@@ -269,5 +328,58 @@ public class CitasService {
             listadoCitas.add(dto);
         }
         return listadoCitas;
+    }
+
+    public DiaCitaDto obtenerCitasPorDoctorPorDia(Long drId, String fecha) throws ParseException {
+        DiaCitaDto diaCitaDto = new DiaCitaDto();
+
+        Date dia = new SimpleDateFormat("dd-MM-yyyy").parse(fecha);
+
+        List<CitaDrDTO> listaDeCitas = new ArrayList<>();
+
+        for (Cita c : citaRepository.getAllByDoctorIdAndFechaOrderByHoraAsc(drId, new java.sql.Date(dia.getTime()))) {
+            CitaDrDTO dto = new CitaDrDTO();
+            dto.setId(c.getId());
+            if (c.getNombreOpcional().equals("-")) {
+                dto.setNombrePaciente(c.getUsuario().getNombre());
+            } else {
+                dto.setNombrePaciente(c.getNombreOpcional());
+
+            }
+            dto.setTelPaciente(c.getTelOpcional());
+            dto.setPhotoUrl(c.getUsuario().getImageUrl());
+            dto.setFecha(c.getFecha());
+            dto.setHora(c.getHora());
+            dto.setStatus(c.getEstadoConfirmacion().getEstado());
+            dto.setStatusDescripcion(c.getEstadoConfirmacion().getNombre());
+            listaDeCitas.add(dto);
+        }
+        diaCitaDto.setDia(dia);
+        diaCitaDto.setCitas(listaDeCitas);
+
+        return diaCitaDto;
+    }
+
+    public List<CitaDrDTO> obtenerCitasPorDoctorParaConfirmar(Long drId) {
+        List<CitaDrDTO> citasPorConfirmar = new ArrayList<>();
+
+        for (Cita c : citaRepository.getAllByDoctorIdAndApartadaOrderByCreatedDateAsc(drId, false)) {
+            CitaDrDTO dto = new CitaDrDTO();
+            dto.setId(c.getId());
+            if (c.getNombreOpcional().equals("-")) {
+                dto.setNombrePaciente(c.getUsuario().getNombre());
+            } else {
+                dto.setNombrePaciente(c.getNombreOpcional());
+            }
+            dto.setTelPaciente(c.getTelOpcional());
+            dto.setPhotoUrl(c.getUsuario().getImageUrl());
+            dto.setFecha(c.getFecha());
+            dto.setHora(c.getHora());
+            dto.setStatus(c.getEstadoConfirmacion().getEstado());
+            dto.setStatusDescripcion(c.getEstadoConfirmacion().getNombre());
+            citasPorConfirmar.add(dto);
+        }
+
+        return citasPorConfirmar;
     }
 }

@@ -10,7 +10,9 @@ import javax.persistence.Entity;
 @Entity
 public class Usuario extends BaseEntity {
     private String nombre;
+    private String email;
     private String token;
     private String usuario;
+    private String imageUrl;
     private String gcm;
 }
