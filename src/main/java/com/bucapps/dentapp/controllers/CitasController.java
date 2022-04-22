@@ -71,7 +71,7 @@ public class CitasController {
 
     @GetMapping(value = "citas/dr/confirmar/{drId}", produces = "application/json")
     @ResponseBody
-    public ResponseEntity<List<CitaDrDTO>> obtenerCitasPorDoctorParaConfirmar(@PathVariable(name = "drId") Long drId) throws ParseException {
+    public ResponseEntity<List<CitaDrDTO>> obtenerCitasPorDoctorParaConfirmar(@PathVariable(name = "drId") Long drId) {
         return ResponseEntity.ok(citasService.obtenerCitasPorDoctorParaConfirmar(drId));
 
     }
@@ -82,5 +82,11 @@ public class CitasController {
                                                                   @PathVariable(name = "fecha") String fecha) throws ParseException {
         return ResponseEntity.ok(citasService.obtenerCitasPorDoctorPorDia(drId,fecha));
 
+    }
+
+    @PostMapping(value = "citas/estado",produces = "application/json")
+    @ResponseBody
+            public ResponseEntity<CitaDrDTO> cambiarestadoDeLaCita(@RequestBody CitaDrDTO dto){
+        return ResponseEntity.ok(citasService.cambiarestadoDeLaCita(dto));
     }
 }

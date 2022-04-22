@@ -337,7 +337,7 @@ public class CitasService {
 
         List<CitaDrDTO> listaDeCitas = new ArrayList<>();
 
-        for (Cita c : citaRepository.getAllByDoctorIdAndFechaOrderByHoraAsc(drId, new java.sql.Date(dia.getTime()))) {
+        for (Cita c : citaRepository.getAllByDoctorIdAndFechaAndEstadoConfirmacionEstadoOrderByHora(drId, new java.sql.Date(dia.getTime()),2L)) {
             CitaDrDTO dto = new CitaDrDTO();
             dto.setId(c.getId());
             if (c.getNombreOpcional().equals("-")) {
@@ -363,7 +363,7 @@ public class CitasService {
     public List<CitaDrDTO> obtenerCitasPorDoctorParaConfirmar(Long drId) {
         List<CitaDrDTO> citasPorConfirmar = new ArrayList<>();
 
-        for (Cita c : citaRepository.getAllByDoctorIdAndApartadaOrderByCreatedDateAsc(drId, false)) {
+        for (Cita c : citaRepository.getAllByDoctorIdAndAndEstadoConfirmacionEstadoOrderByCreatedDate(drId, 1L)) {
             CitaDrDTO dto = new CitaDrDTO();
             dto.setId(c.getId());
             if (c.getNombreOpcional().equals("-")) {
@@ -381,5 +381,14 @@ public class CitasService {
         }
 
         return citasPorConfirmar;
+    }
+
+    public CitaDrDTO cambiarestadoDeLaCita(CitaDrDTO dto) {
+
+        Cita cita = citaRepository.getById(dto.getCitaId());
+        cita.setEstadoConfirmacion(estadoConfirmacionRepository.getById(dto.getStatus()));
+        citaRepository.save(cita);
+
+        return dto;
     }
 }

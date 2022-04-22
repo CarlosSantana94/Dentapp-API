@@ -37,6 +37,7 @@ public interface CitaRepository extends JpaRepository<Cita, Long> {
     List<Cita> getAllUsuarioToken(String usuarioToken);
 
     List<Cita> getAllByDoctorIdAndFechaOrderByHoraAsc(Long drId, Date fecha);
+    List<Cita> getAllByDoctorIdAndFechaAndEstadoConfirmacionEstadoOrderByHora(Long drId, Date fecha,Long estadoConfirmacion);
 
-    List<Cita> getAllByDoctorIdAndApartadaOrderByCreatedDateAsc(Long drId, Boolean apartada);
+    List<Cita> getAllByDoctorIdAndAndEstadoConfirmacionEstadoOrderByCreatedDate(Long drId, Long estadoConfirmacion);
 }

@@ -19,4 +19,5 @@ public class CitaDrDTO {
     private Time hora;
     private Long status;
     private String statusDescripcion;
+    private Long citaId;
 }
