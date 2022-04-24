@@ -36,8 +36,13 @@ public interface CitaRepository extends JpaRepository<Cita, Long> {
             "order by fecha asc ,hora asc ", nativeQuery = true)
     List<Cita> getAllUsuarioToken(String usuarioToken);
 
-    List<Cita> getAllByDoctorIdAndFechaOrderByHoraAsc(Long drId, Date fecha);
-    List<Cita> getAllByDoctorIdAndFechaAndEstadoConfirmacionEstadoOrderByHora(Long drId, Date fecha,Long estadoConfirmacion);
+    @Query(value = "select *\n" +
+            "from cita\n" +
+            "where doctor_id = ?1\n" +
+            "  and estado_confirmacion_id in (1, 2, 5);", nativeQuery = true)
+    List<Cita> obtenerTodasLasCitasPagadasPorConfirmarYFinalizadas(Long drId);
+
+    List<Cita> getAllByDoctorIdAndFechaAndEstadoConfirmacionEstadoOrderByHora(Long drId, Date fecha, Long estadoConfirmacion);
 
     List<Cita> getAllByDoctorIdAndAndEstadoConfirmacionEstadoOrderByCreatedDate(Long drId, Long estadoConfirmacion);
 }

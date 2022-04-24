@@ -2,7 +2,7 @@ package com.bucapps.dentapp.services;
 
 import com.bucapps.dentapp.models.dto.ApartaCitaDto;
 import com.bucapps.dentapp.models.dto.calendarioCita.CitaDrDTO;
-import com.bucapps.dentapp.models.dto.calendarioCita.DiaCitaDto;
+import com.bucapps.dentapp.models.dto.CalendarioCitaDTO;
 import com.bucapps.dentapp.models.dto.conekta.*;
 import com.bucapps.dentapp.models.entity.Cita;
 import com.bucapps.dentapp.models.entity.Doctor;
@@ -330,34 +330,30 @@ public class CitasService {
         return listadoCitas;
     }
 
-    public DiaCitaDto obtenerCitasPorDoctorPorDia(Long drId, String fecha) throws ParseException {
-        DiaCitaDto diaCitaDto = new DiaCitaDto();
+    public List<CalendarioCitaDTO> obtenerCitasPorDoctorPorDia(Long drId) throws ParseException {
+        List<CalendarioCitaDTO> citas = new ArrayList<>();
 
-        Date dia = new SimpleDateFormat("dd-MM-yyyy").parse(fecha);
+        Long i = 0L;
+        for (Cita c : citaRepository.obtenerTodasLasCitasPagadasPorConfirmarYFinalizadas(drId)) {
+            CalendarioCitaDTO citaDTO = new CalendarioCitaDTO();
 
-        List<CitaDrDTO> listaDeCitas = new ArrayList<>();
+            String fechaInicio = c.getFecha().toString() + " " + c.getHora().toLocalTime().toString();
+            String fechaFin = c.getFecha().toString() + " " + c.getHora().toLocalTime().plusHours(1L).toString();
 
-        for (Cita c : citaRepository.getAllByDoctorIdAndFechaAndEstadoConfirmacionEstadoOrderByHora(drId, new java.sql.Date(dia.getTime()),2L)) {
-            CitaDrDTO dto = new CitaDrDTO();
-            dto.setId(c.getId());
-            if (c.getNombreOpcional().equals("-")) {
-                dto.setNombrePaciente(c.getUsuario().getNombre());
-            } else {
-                dto.setNombrePaciente(c.getNombreOpcional());
 
-            }
-            dto.setTelPaciente(c.getTelOpcional());
-            dto.setPhotoUrl(c.getUsuario().getImageUrl());
-            dto.setFecha(c.getFecha());
-            dto.setHora(c.getHora());
-            dto.setStatus(c.getEstadoConfirmacion().getEstado());
-            dto.setStatusDescripcion(c.getEstadoConfirmacion().getNombre());
-            listaDeCitas.add(dto);
+            SimpleDateFormat formatoDeFecha=new SimpleDateFormat("yyyy-MM-dd HH:mm");
+
+            citaDTO.setTitle(c.getUsuario().getNombre());
+            citaDTO.setStartTime(formatoDeFecha.parse(fechaInicio));
+            citaDTO.setEndTime(formatoDeFecha.parse(fechaFin));
+            citaDTO.setAllDay(false);
+
+            citas.add(citaDTO);
+            i++;
         }
-        diaCitaDto.setDia(dia);
-        diaCitaDto.setCitas(listaDeCitas);
 
-        return diaCitaDto;
+
+        return citas;
     }
 
     public List<CitaDrDTO> obtenerCitasPorDoctorParaConfirmar(Long drId) {

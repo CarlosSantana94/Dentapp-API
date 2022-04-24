@@ -2,7 +2,7 @@ package com.bucapps.dentapp.controllers;
 
 import com.bucapps.dentapp.models.dto.ApartaCitaDto;
 import com.bucapps.dentapp.models.dto.calendarioCita.CitaDrDTO;
-import com.bucapps.dentapp.models.dto.calendarioCita.DiaCitaDto;
+import com.bucapps.dentapp.models.dto.CalendarioCitaDTO;
 import com.bucapps.dentapp.models.entity.Cita;
 import com.bucapps.dentapp.services.CitasService;
 import io.conekta.Error;
@@ -76,11 +76,10 @@ public class CitasController {
 
     }
 
-    @GetMapping(value = "citas/dr/dia/{drId}/{fecha}", produces = "application/json")
+    @GetMapping(value = "citas/dr/dia/{drId}", produces = "application/json")
     @ResponseBody
-    public ResponseEntity<DiaCitaDto> obtenerCitasPorDoctorPorDia(@PathVariable(name = "drId") Long drId,
-                                                                  @PathVariable(name = "fecha") String fecha) throws ParseException {
-        return ResponseEntity.ok(citasService.obtenerCitasPorDoctorPorDia(drId,fecha));
+    public ResponseEntity<List<CalendarioCitaDTO>> obtenerCitasPorDoctorPorDia(@PathVariable(name = "drId") Long drId) throws ParseException {
+        return ResponseEntity.ok(citasService.obtenerCitasPorDoctorPorDia(drId));
 
     }
 
