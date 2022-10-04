@@ -20,6 +20,7 @@ public class HealthController {
         HealthDto healthDto = new HealthDto();
         healthDto.setFecha(new Date());
         healthDto.setStatus(true);
+        healthDto.setVersion(15L);
 
 
         return ResponseEntity.ok(healthDto);

@@ -337,16 +337,19 @@ public class CitasService {
         for (Cita c : citaRepository.obtenerTodasLasCitasPagadasPorConfirmarYFinalizadas(drId)) {
             CalendarioCitaDTO citaDTO = new CalendarioCitaDTO();
 
-            String fechaInicio = c.getFecha().toString() + " " + c.getHora().toLocalTime().toString();
+            String fechaInicio = c.getFecha().toString() + " " + c.getHora().toString();
             String fechaFin = c.getFecha().toString() + " " + c.getHora().toLocalTime().plusHours(1L).toString();
 
 
+            SimpleDateFormat formatoDeFechaI=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             SimpleDateFormat formatoDeFecha=new SimpleDateFormat("yyyy-MM-dd HH:mm");
 
             citaDTO.setTitle(c.getUsuario().getNombre());
-            citaDTO.setStartTime(formatoDeFecha.parse(fechaInicio));
+            citaDTO.setStartTime(formatoDeFechaI.parse(fechaInicio));
             citaDTO.setEndTime(formatoDeFecha.parse(fechaFin));
             citaDTO.setAllDay(false);
+            citaDTO.setDia(c.getFecha());
+            citaDTO.setTiempo(c.getHora());
 
             citas.add(citaDTO);
             i++;

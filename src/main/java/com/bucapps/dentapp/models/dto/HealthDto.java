@@ -11,4 +11,5 @@ import java.util.Date;
 public class HealthDto {
     private Date fecha;
     private Boolean status;
+    private Long version;
 }
