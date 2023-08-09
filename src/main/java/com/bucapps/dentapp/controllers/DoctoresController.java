@@ -1,5 +1,6 @@
 package com.bucapps.dentapp.controllers;
 
+import com.bucapps.dentapp.models.dto.DoctorLogin;
 import com.bucapps.dentapp.models.entity.Doctor;
 import com.bucapps.dentapp.services.DoctoresService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +35,12 @@ public class DoctoresController {
     @ResponseBody
     public ResponseEntity<Doctor> crearDoctor(@RequestBody Doctor doctor) {
         return ResponseEntity.ok(doctoresService.crearDoctor(doctor));
+    }
+
+    @PostMapping(value = "doctores/login", produces = "application/json")
+    @ResponseBody
+    public ResponseEntity<DoctorLogin> loginDoctor(@RequestBody DoctorLogin doctorLogin) {
+        return ResponseEntity.ok(doctoresService.loginDoctor(doctorLogin));
     }
 
 }

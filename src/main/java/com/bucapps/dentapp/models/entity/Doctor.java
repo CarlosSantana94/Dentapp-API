@@ -24,6 +24,14 @@ public class Doctor extends BaseEntity {
 
     private String tel;
 
+    private String email;
+
+    private Boolean yaSeRegistro;
+
+    private String tempPwd;
+
+    private String pwd;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "clinica_id")
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
