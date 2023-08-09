@@ -43,4 +43,10 @@ public class DoctoresController {
         return ResponseEntity.ok(doctoresService.loginDoctor(doctorLogin));
     }
 
+    @PostMapping(value = "doctores/login/actualizarPwd", produces = "application/json")
+    @ResponseBody
+    public ResponseEntity<DoctorLogin> actualizarPwd(@RequestBody DoctorLogin doctorLogin) {
+        return ResponseEntity.ok(doctoresService.actualizarPwd(doctorLogin));
+    }
+
 }

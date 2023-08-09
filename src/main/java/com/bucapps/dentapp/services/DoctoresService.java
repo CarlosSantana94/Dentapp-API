@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -39,7 +40,7 @@ public class DoctoresService {
         if (!doctor.getYaSeRegistro()) {
             // no se ha registrado o completado el cambio de contraseña
             UUID uuid = UUID.randomUUID();
-            doctor.setPwd(uuid.toString());
+            doctor.setTempPwd(uuid.toString());
             EmailSender.sendEmail(doctor.getEmail(), "Bienvenido a Dentapp", "Usa este texto como tu contraseña de primer uso: " + uuid.toString());
         }
 
@@ -54,6 +55,8 @@ public class DoctoresService {
         if (doctor == null) {
             doctorLogin.setMensaje("Error en los datos de acceso");
         } else {
+            doctorLogin.setNombre(doctor.getNombre());
+            doctorLogin.setId(doctor.getId());
 
             if (doctor.getYaSeRegistro() && Objects.equals(doctor.getPwd(), doctorLogin.getPassword())) {
                 //login normal ya creado
@@ -63,11 +66,25 @@ public class DoctoresService {
                 // login nuevo registro
                 doctorLogin.setMensaje("Confirme su registro.");
 
+
             } else {
-                doctorLogin.setMensaje("Error en los datos de acceso");
+                doctorLogin.setMensaje("Error en los datos de acceso.");
             }
         }
 
+
+        return doctorLogin;
+    }
+
+    public DoctorLogin actualizarPwd(DoctorLogin doctorLogin) {
+
+        Doctor doctor = doctorRepository.findById(doctorLogin.getId()).get();
+
+        doctor.setPwd(doctorLogin.getPassword());
+        doctor.setTempPwd(new Date().toString());
+        doctor.setYaSeRegistro(true);
+
+        doctorRepository.save(doctor);
 
         return doctorLogin;
     }
